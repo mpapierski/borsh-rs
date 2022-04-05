@@ -336,7 +336,7 @@ where
 
 macro_rules! impl_tuple {
     ($($name:ident),+) => {
-    impl<$($name),+> BorshSchema for ($($name),+)
+    impl<$($name),+> BorshSchema for ($($name),+,)
     where
         $($name: BorshSchema),+
     {
@@ -358,6 +358,7 @@ macro_rules! impl_tuple {
     };
 }
 
+impl_tuple!(T0);
 impl_tuple!(T0, T1);
 impl_tuple!(T0, T1, T2);
 impl_tuple!(T0, T1, T2, T3);
@@ -465,6 +466,20 @@ mod tests {
             map! {
             "Vec<u64>" => Definition::Sequence { elements: "u64".to_string() },
             "Vec<Vec<u64>>" => Definition::Sequence { elements: "Vec<u64>".to_string() }
+            },
+            actual_defs
+        );
+    }
+
+    #[test]
+    fn very_simple_tuple() {
+        let actual_name = <(String,)>::declaration();
+        let mut actual_defs = map!();
+        <(String,)>::add_definitions_recursively(&mut actual_defs);
+        assert_eq!("Tuple<string>", actual_name);
+        assert_eq!(
+            map! {
+                "Tuple<string>" => Definition::Tuple { elements: vec!["string".to_string()]}
             },
             actual_defs
         );
