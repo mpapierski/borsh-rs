@@ -14,7 +14,7 @@
 use crate as borsh; // For `#[derive(BorshSerialize, BorshDeserialize)]`.
 use crate::maybestd::{
     boxed::Box,
-    collections::{hash_map::Entry, BTreeMap, HashMap, HashSet},
+    collections::{hash_map::Entry, BTreeMap, BTreeSet, HashMap, HashSet},
     format,
     string::{String, ToString},
     vec,
@@ -314,6 +314,23 @@ where
 
     fn declaration() -> Declaration {
         format!(r#"HashSet<{}>"#, T::declaration())
+    }
+}
+
+impl<T> BorshSchema for BTreeSet<T>
+where
+    T: BorshSchema,
+{
+    fn add_definitions_recursively(definitions: &mut HashMap<Declaration, Definition>) {
+        let definition = Definition::Sequence {
+            elements: <T>::declaration(),
+        };
+        Self::add_definition(Self::declaration(), definition, definitions);
+        <T>::add_definitions_recursively(definitions);
+    }
+
+    fn declaration() -> Declaration {
+        format!(r#"BTreeSet<{}>"#, T::declaration())
     }
 }
 
