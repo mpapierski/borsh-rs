@@ -26,7 +26,7 @@ pub fn process_struct(input: &ItemStruct, cratename: Ident) -> syn::Result<Token
                 let field_name = field.ident.as_ref().unwrap().to_token_stream().to_string();
                 let field_type = &field.ty;
                 fields_vec.push(quote! {
-                    (#field_name.to_string(), <#field_type>::declaration())
+                    (#field_name.into(), <#field_type>::declaration())
                 });
                 add_definitions_recursively_rec.extend(quote! {
                     <#field_type>::add_definitions_recursively(definitions);
@@ -281,8 +281,8 @@ mod tests {
                     >
                 ) {
                     let fields = borsh::schema::Fields::NamedFields(borsh::maybestd::vec![
-                        ("x".to_string(), <u64>::declaration()),
-                        ("y".to_string(), <String>::declaration())
+                        ("x".into(), <u64>::declaration()),
+                        ("y".into(), <String>::declaration())
                     ]);
                     let definition = borsh::schema::Definition::Struct { fields };
                     Self::add_definition(Self::declaration(), definition, definitions);
@@ -328,8 +328,8 @@ mod tests {
                     >
                 ) {
                     let fields = borsh::schema::Fields::NamedFields(borsh::maybestd::vec![
-                        ("x".to_string(), <HashMap<K, V> >::declaration()),
-                        ("y".to_string(), <String>::declaration())
+                        ("x".into(), <HashMap<K, V> >::declaration()),
+                        ("y".into(), <String>::declaration())
                     ]);
                     let definition = borsh::schema::Definition::Struct { fields };
                     Self::add_definition(Self::declaration(), definition, definitions);
@@ -379,8 +379,8 @@ mod tests {
                     >
                 ) {
                     let fields = borsh::schema::Fields::NamedFields(borsh::maybestd::vec![
-                        ("x".to_string(), <HashMap<K, V> >::declaration()),
-                        ("y".to_string(), <String>::declaration())
+                        ("x".into(), <HashMap<K, V> >::declaration()),
+                        ("y".into(), <String>::declaration())
                     ]);
                     let definition = borsh::schema::Definition::Struct { fields };
                     Self::add_definition(Self::declaration(), definition, definitions);
