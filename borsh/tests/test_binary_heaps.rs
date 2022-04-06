@@ -27,4 +27,4 @@ macro_rules! test_binary_heaps {
 test_binary_heaps!(test_binary_heap_u8, 100u8, u8);
 test_binary_heaps!(test_binary_heap_i8, 100i8, i8);
 test_binary_heaps!(test_binary_heap_u32, 1000000000u32, u32);
-test_binary_heaps!(test_binary_heap_string, "a".to_string(), String);
+test_binary_heaps!(test_binary_heap_string, "A".to_string(), String);

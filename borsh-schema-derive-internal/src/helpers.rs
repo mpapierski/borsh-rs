@@ -32,7 +32,7 @@ pub fn declaration(
     }
     let result = if declaration_params.is_empty() {
         quote! {
-                #ident_str.to_string()
+                #ident_str.into()
         }
     } else {
         quote! {

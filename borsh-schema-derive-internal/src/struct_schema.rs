@@ -117,7 +117,7 @@ mod tests {
             impl borsh::BorshSchema for A
             {
                 fn declaration() -> borsh::schema::Declaration {
-                    "A".to_string()
+                    "A".into()
                 }
                 fn add_definitions_recursively(definitions: &mut borsh::maybestd::collections::HashMap<borsh::schema::Declaration, borsh::schema::Definition>) {
                     let fields = borsh::schema::Fields::Empty;
@@ -186,7 +186,7 @@ mod tests {
                 String: borsh::BorshSchema
             {
                 fn declaration() -> borsh::schema::Declaration {
-                    "A".to_string()
+                    "A".into()
                 }
                 fn add_definitions_recursively(
                     definitions: &mut borsh::maybestd::collections::HashMap<
@@ -272,7 +272,7 @@ mod tests {
                 String: borsh::BorshSchema
             {
                 fn declaration() -> borsh::schema::Declaration {
-                    "A".to_string()
+                    "A".into()
                 }
                 fn add_definitions_recursively(
                     definitions: &mut borsh::maybestd::collections::HashMap<
@@ -407,7 +407,7 @@ mod tests {
         let expected = quote!{
             impl borsh::BorshSchema for A {
                 fn declaration() -> borsh::schema::Declaration {
-                    "A".to_string()
+                    "A".into()
                 }
                 fn add_definitions_recursively(
                     definitions: &mut borsh::maybestd::collections::HashMap<
@@ -442,7 +442,7 @@ mod tests {
                 String: borsh::BorshSchema
             {
                 fn declaration() -> borsh::schema::Declaration {
-                    "A".to_string()
+                    "A".into()
                 }
                 fn add_definitions_recursively(
                     definitions: &mut borsh::maybestd::collections::HashMap<
