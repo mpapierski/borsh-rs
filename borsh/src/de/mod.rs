@@ -8,13 +8,16 @@ use core::{
 use crate::maybestd::{
     borrow::{Borrow, Cow, ToOwned},
     boxed::Box,
-    collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList, VecDeque},
+    collections::{BTreeMap, BTreeSet, BinaryHeap, LinkedList, VecDeque},
     format,
     io::{Error, ErrorKind, Result},
     string::{String, ToString},
     vec,
     vec::Vec,
 };
+
+#[cfg(feature = "std")]
+use std::collections::{HashMap, HashSet};
 
 #[cfg(feature = "rc")]
 use crate::maybestd::{rc::Rc, sync::Arc};
@@ -370,6 +373,7 @@ where
     }
 }
 
+#[cfg(feature = "std")]
 impl<T, H> BorshDeserialize for HashSet<T, H>
 where
     T: BorshDeserialize + Eq + Hash,
@@ -382,6 +386,7 @@ where
     }
 }
 
+#[cfg(feature = "std")]
 impl<K, V, H> BorshDeserialize for HashMap<K, V, H>
 where
     K: BorshDeserialize + Eq + Hash,
@@ -393,6 +398,41 @@ where
         let len = u32::deserialize(buf)?;
         // TODO(16): return capacity allocation when we can safely do that.
         let mut result = HashMap::with_hasher(H::default());
+        for _ in 0..len {
+            let key = K::deserialize(buf)?;
+            let value = V::deserialize(buf)?;
+            result.insert(key, value);
+        }
+        Ok(result)
+    }
+}
+
+
+#[cfg(feature = "hashbrown")]
+impl<T, H> BorshDeserialize for hashbrown::HashSet<T, H>
+where
+    T: BorshDeserialize + Eq + Hash,
+    H: BuildHasher + Default,
+{
+    #[inline]
+    fn deserialize(buf: &mut &[u8]) -> Result<Self> {
+        let vec = <Vec<T>>::deserialize(buf)?;
+        Ok(vec.into_iter().collect::<hashbrown::HashSet<T, H>>())
+    }
+}
+
+#[cfg(feature = "hashbrown")]
+impl<K, V, H> BorshDeserialize for hashbrown::HashMap<K, V, H>
+where
+    K: BorshDeserialize + Eq + Hash,
+    V: BorshDeserialize,
+    H: BuildHasher + Default,
+{
+    #[inline]
+    fn deserialize(buf: &mut &[u8]) -> Result<Self> {
+        let len = u32::deserialize(buf)?;
+        // TODO(16): return capacity allocation when we can safely do that.
+        let mut result = Self::with_hasher(H::default());
         for _ in 0..len {
             let key = K::deserialize(buf)?;
             let value = V::deserialize(buf)?;
@@ -633,5 +673,20 @@ where
 impl<T: ?Sized> BorshDeserialize for PhantomData<T> {
     fn deserialize(_: &mut &[u8]) -> Result<Self> {
         Ok(Self::default())
+    }
+}
+
+#[cfg(feature = "ratio")]
+impl<T> BorshDeserialize for num_rational::Ratio<T>
+where
+    T: BorshDeserialize + num_traits::Zero,
+{
+    #[inline]
+    fn deserialize(buf: &mut &[u8]) -> Result<Self> {
+        let (numer, denom) = <(T, T)>::deserialize(buf)?;
+        if denom.is_zero() {
+            return Err(Error::new(ErrorKind::InvalidData, ERROR_INVALID_ZERO_VALUE));
+        }
+        Ok(num_rational::Ratio::new_raw(numer, denom))
     }
 }

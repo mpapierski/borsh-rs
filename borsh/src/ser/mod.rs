@@ -5,11 +5,14 @@ use core::marker::PhantomData;
 use crate::maybestd::{
     borrow::{Cow, ToOwned},
     boxed::Box,
-    collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList, VecDeque},
+    collections::{BTreeMap, BTreeSet, BinaryHeap, LinkedList, VecDeque},
     io::{ErrorKind, Result, Write},
     string::String,
     vec::Vec,
 };
+
+#[cfg(feature = "std")]
+use std::collections::{HashMap, HashSet};
 
 #[cfg(feature = "rc")]
 use crate::maybestd::{rc::Rc, sync::Arc};
@@ -304,6 +307,7 @@ where
     }
 }
 
+#[cfg(feature = "std")]
 impl<K, V, H> BorshSerialize for HashMap<K, V, H>
 where
     K: BorshSerialize + PartialOrd,
@@ -325,7 +329,50 @@ where
     }
 }
 
+#[cfg(feature = "std")]
 impl<T, H> BorshSerialize for HashSet<T, H>
+where
+    T: BorshSerialize + PartialOrd,
+    H: BuildHasher,
+{
+    #[inline]
+    fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+        let mut vec = self.iter().collect::<Vec<_>>();
+        vec.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        u32::try_from(vec.len())
+            .map_err(|_| ErrorKind::InvalidInput)?
+            .serialize(writer)?;
+        for item in vec {
+            item.serialize(writer)?;
+        }
+        Ok(())
+    }
+}
+
+#[cfg(feature = "hashbrown")]
+impl<K, V, H> BorshSerialize for hashbrown::HashMap<K, V, H>
+where
+    K: BorshSerialize + PartialOrd,
+    V: BorshSerialize,
+    H: BuildHasher,
+{
+    #[inline]
+    fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+        let mut vec = self.iter().collect::<Vec<_>>();
+        vec.sort_by(|(a, _), (b, _)| a.partial_cmp(b).unwrap());
+        u32::try_from(vec.len())
+            .map_err(|_| ErrorKind::InvalidInput)?
+            .serialize(writer)?;
+        for (key, value) in vec {
+            key.serialize(writer)?;
+            value.serialize(writer)?;
+        }
+        Ok(())
+    }
+}
+
+#[cfg(feature = "hashbrown")]
+impl<T, H> BorshSerialize for hashbrown::HashSet<T, H>
 where
     T: BorshSerialize + PartialOrd,
     H: BuildHasher,
@@ -554,5 +601,12 @@ impl<T: BorshSerialize + ?Sized> BorshSerialize for Arc<T> {
 impl<T: ?Sized> BorshSerialize for PhantomData<T> {
     fn serialize<W: Write>(&self, _: &mut W) -> Result<()> {
         Ok(())
+    }
+}
+
+#[cfg(feature = "ratio")]
+impl<T: BorshSerialize> BorshSerialize for num_rational::Ratio<T> {
+    fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+        (self.numer(), self.denom()).serialize(writer)
     }
 }
